@@ -13,14 +13,17 @@
   ],
   "main": "src/main.js",
   "module": "src/main.js",
-  "repository": "git@github.com:kalkih/mini-media-player.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kalkih/mini-media-player.git"
+  },
   "author": "Karl Kihlström <mrkihlstrom@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "home-assistant-js-websocket": "^6.1.0",
     "lit-element": "^2.3.1",
     "lit-html": "^1.2.1",
-    "node-vibrant": "^3.2.1-alpha.1",
+    "node-vibrant": "^4.0.4",
     "resize-observer-polyfill": "^1.5.1"
   },
   "devDependencies": {
@@ -41,7 +44,7 @@
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-serve": "^1.1.0",
-    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-terser": "^4.0.3",
     "rollup-plugin-typescript2": "^0.31.2",
     "typescript": "^4.4.3"
   },
@@ -50,5 +53,10 @@
     "build": "npm run lint && npm run rollup",
     "lint": "eslint src/*.ts",
     "rollup": "rollup -c"
-  }
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kalkih/mini-media-player/issues"
+  },
+  "homepage": "https://github.com/kalkih/mini-media-player#readme"
 }
