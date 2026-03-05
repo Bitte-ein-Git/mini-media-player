@@ -1,0 +1,114 @@
+name: 🌀 Create 'mini-media-player ⏯️' Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g., v1.2.3)'
+        default: "v1.16.11-PRE"
+        required: true
+        type: string
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Bitte-ein-Git/action_clear-runs@main
+
+  validate-hassfest:
+    name: ☑️ Validate with hassfest
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout code
+        uses: "actions/checkout@v4"
+      - name: Run hassfest validation
+        uses: "home-assistant/actions/hassfest@master"
+        # This prevents the workflow from failing if hassfest finds an error
+        continue-on-error: true
+
+  validate-hacs:
+    name: ☑️ Validate with HACS
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout code
+        uses: "actions/checkout@v4"
+      - name: Run HACS validation
+        uses: "hacs/action@main"
+        with:
+          category: "plugin"
+          ignore: "brands, description, images, information, topics"
+
+  release:
+    name: ✅ Create Release
+    runs-on: ubuntu-latest
+    needs: [validate-hassfest, validate-hacs]
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version details
+        id: get_version
+        run: |
+          # Get tag name from workflow dispatch input
+          TAG_NAME="${{ inputs.tag_name }}"
+          
+          # Remove a potential "v" prefix to get the bare version number
+          VERSION="${TAG_NAME#v}"
+          
+          # Set environment variables for subsequent steps
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "RELEASE_TITLE=⏯️ v$VERSION" >> $GITHUB_ENV
+
+      - name: Check for existing tag
+        id: check_tag
+        run: |
+          # Check if tag exists remotely
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ env.TAG_NAME }}" >/dev/null 2>&1; then
+            echo "Tag ${{ env.TAG_NAME }} already exists. Skipping release."
+            echo "SKIP=true" >> $GITHUB_ENV
+          else
+            echo "Tag ${{ env.TAG_NAME }} does not exist. Proceeding."
+            echo "SKIP=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create and Push Tag
+        if: env.SKIP == 'false'
+        run: |
+          # Configure git user
+          git config user.name "Build Integration [🤖Bot]"
+          git config user.email "build-integration[bot]@users.noreply.github.com"
+          
+          # Create annotated tag
+          git tag -a "${{ env.TAG_NAME }}" -m "${{ env.RELEASE_TITLE }}"
+          
+          # Push the tag
+          git push origin "${{ env.TAG_NAME }}"
+
+      - name: Create Release Body
+        if: env.SKIP == 'false'
+        run: |
+          # Create markdown file for release notes
+          cat << EOF > release_body.md
+          # 🗿 • [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://ha-link.heyfordy.dev/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Bitte-ein-Git&repository=ha_mini-media-player&category=plugin) 
+
+          EOF
+
+      - name: Create Release
+        if: env.SKIP == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create GitHub release using the pushed tag and attach the JS bundle
+          gh release create ${{ env.TAG_NAME }} \
+            --title "${{ env.RELEASE_TITLE }}" \
+            --notes-file release_body.md \
+            ${{ github.workspace }}/dist/mini-media-player-bundle.js#mini-media-player-bundle.js

@@ -1,6 +1,6 @@
 {
   "name": "mini-media-player",
-  "version": "1.16.10",
+  "version": "1.16.11-PRE",
   "description": "A minimalistic yet customizable media player card for Home Assistant Lovelace UI",
   "keywords": [
     "home-assistant",
@@ -13,7 +13,7 @@
   ],
   "main": "src/main.js",
   "module": "src/main.js",
-  "repository": "git@github.com:kalkih/mini-media-player.git",
+  "repository": "git@github.com:Bitte-ein-Git/ha_mini-media-player.git",
   "author": "Karl Kihlström <mrkihlstrom@gmail.com>",
   "license": "MIT",
   "dependencies": {
